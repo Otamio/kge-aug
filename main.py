@@ -100,7 +100,7 @@ def main():
             try_to_make_directory(f"results/numeric/{dataset}")
             try_to_make_directory(f"results/numeric/{dataset}/{model}")
             try_to_make_directory(f"results/numeric/{dataset}/{model}/{target_train.split('.')[0]}")
-            pipeline_result.save_to_directory(f"results/{dataset}/{model}/{target_train.split('.')[0]}")
+            pipeline_result.save_to_directory(f"results/numeric/{dataset}/{model}/{target_train.split('.')[0]}")
 
         else:
 
@@ -108,7 +108,7 @@ def main():
             try_to_make_directory(f"results160/numeric/{dataset}")
             try_to_make_directory(f"results160/numeric/{dataset}/{model}")
             try_to_make_directory(f"results160/numeric/{dataset}/{model}/{target_train.split('.')[0]}")
-            pipeline_result.save_to_directory(f"results160/{dataset}/{model}/{target_train.split('.')[0]}")
+            pipeline_result.save_to_directory(f"results160/numeric/{dataset}/{model}/{target_train.split('.')[0]}")
 
 
 if __name__ == '__main__':
