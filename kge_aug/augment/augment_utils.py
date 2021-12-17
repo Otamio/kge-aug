@@ -66,10 +66,10 @@ def get_data_lp(dataset):
     if dataset == "WikidataDWD":
         entities = pd.read_csv(f'datasets/{dataset}/data/train.tsv', sep='\t', usecols=[0, 1, 2])
     else:
-        entities = pd.read_csv(f'LP/{dataset}/data/train.tsv', sep='\t', header=None, usecols=[0, 1, 2])
+        entities = pd.read_csv(f'datasets/{dataset}/data/train.tsv', sep='\t', header=None, usecols=[0, 1, 2])
     entities.columns = ['node1', 'label', 'node2']
 
-    df = pd.read_csv(f'LP/{dataset}/data/numerical_literals.tsv', sep='\t', header=None, usecols=[0, 1, 2])
+    df = pd.read_csv(f'datasets/{dataset}/data/numerical_literals.tsv', sep='\t', header=None, usecols=[0, 1, 2])
     df.columns = ['node1', 'label', 'node2']
     df = df[df['node2'].notnull()]
     df = df.reset_index(drop=True)
@@ -222,7 +222,7 @@ def get_edge_starts(df_sli, MODE, num_bins=None):
         bins = get_bins_kde(df_sli)
     elif MODE == 'QuantileDual':
         bins = get_bins_quantile(df_sli, num_bins)
-    else:  ## Unsupported Mode
+    else:  # Unsupported Mode
         return None
     return bins
 
@@ -492,10 +492,10 @@ def augment_lp(entities, df, dataset, mode, bins=None, levels=3):
         print(f'Running mode {mode}')
 
         numeric_edges_processed, _, qnode_edges = create_new_edges(df, mode, bins, levels)
-        ### Write the original version
+        # Write the original version
         pd.concat([entities, numeric_edges_processed]).to_csv(f'datasets/{dataset}/data/train_{mode}.tsv',
                                                               sep='\t', header=None, index=None)
-        ### Write the chainning version
+        # Write the chainning version
         pd.concat([entities, numeric_edges_processed,
                    pd.DataFrame(qnode_edges)]).to_csv(f'datasets/{dataset}/data/train_{mode}_Chain.tsv',
                                                       sep='\t', header=None, index=None)
@@ -523,7 +523,7 @@ def augment_np(entities, values, dataset, mode, bins=None, levels=3):
         for k, v in collections.items():
             medians_dict[k] = np.median(v)
 
-        ### Finally, add the median of each property as a baseline
+        # Finally, add the median of each property as a baseline
         for property_ in numeric_edges_raw['label'].unique():
             medians_dict[property_] = numeric_edges_raw[numeric_edges_raw['label'] == property_]['node2'].median()
 
@@ -543,6 +543,7 @@ def augment_np(entities, values, dataset, mode, bins=None, levels=3):
         # Write the original version
         pd.concat([entities, numeric_edges_processed]).to_csv(f'NP/{dataset}/processed/train_{mode}.tsv',
                                                               sep='\t', header=None, index=None)
+
         # Write the chaining version
         pd.concat([entities, numeric_edges_processed,
                    pd.DataFrame(qnode_edges)]).to_csv(f'NP/{dataset}/processed/train_{mode}_Chain.tsv',

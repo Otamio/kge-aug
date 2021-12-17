@@ -1,5 +1,5 @@
-from augment_utils import *
 import argparse
+from augment_utils import *
 
 
 parser = argparse.ArgumentParser(
