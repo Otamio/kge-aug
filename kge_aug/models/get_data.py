@@ -24,12 +24,12 @@ def get(dataset, target, training_fname):
 
         training = TriplesFactory(path=f"{dataset_path}/{target_path}/{training_fname}")
         testing = TriplesFactory(
-            path=f"{dataset_path}/test.tsv",
+            path=f"{dataset_path}/data/test.tsv",
             entity_to_id=training.entity_to_id,
             relation_to_id=training.relation_to_id
         )
         validation = TriplesFactory(
-            path=f"{dataset_path}/valid.tsv",
+            path=f"{dataset_path}/data/valid.tsv",
             entity_to_id=training.entity_to_id,
             relation_to_id=training.relation_to_id
         )
@@ -38,24 +38,14 @@ def get(dataset, target, training_fname):
 
         training = TriplesFactory.from_path(f"{dataset_path}/{target_path}/{training_fname}")
         testing = TriplesFactory.from_path(
-            f"{dataset_path}/test.tsv",
+            f"{dataset_path}/data/test.tsv",
             entity_to_id=training.entity_to_id,
             relation_to_id=training.relation_to_id
         )
         validation = TriplesFactory.from_path(
-            f"{dataset_path}/valid.tsv",
+            f"{dataset_path}/data/valid.tsv",
             entity_to_id=training.entity_to_id,
             relation_to_id=training.relation_to_id
         )
 
     return training, testing, validation
-
-
-def get_np(dataset, training_fname):
-
-    dataset_path = dataset_path_mapping[dataset]
-    if pykeen.get_version() == "1.0.0":
-        training = TriplesFactory(path=f"{dataset_path}/numeric/{training_fname}")
-    else:
-        training = TriplesFactory.from_path(f"{dataset_path}/numeric/{training_fname}")
-    return training

@@ -49,9 +49,11 @@ def main():
     target = sys.argv[3]
     target_train = sys.argv[4] if len(sys.argv) > 4 else "train.tsv"
 
+    training, testing, validation = get_data.get(dataset, target, target_train)
+
+
     if target != 'np':  # Running link prediction
 
-        training, testing, validation = get_data.get(dataset, target, target_train)
         model_mapping = get_model_mapping(dataset)
         pipeline_result = model_mapping[model.lower()].get_pipeline(training, testing, validation)
 
@@ -90,11 +92,11 @@ def main():
 
     else:
 
-        training = get_data.get_np(dataset, target_train)
         model_mapping = get_model_mapping_np()
-        pipeline_result = model_mapping[model.lower()].get_pipeline(training)
+        pipeline_result = model_mapping[model.lower()].get_pipeline(training, testing, validation)
+
         if pykeen.get_version() == "1.0.0":
-            metrics = pipeline_result.metric_results
+
             try_to_make_directory(f"results/numeric")
             try_to_make_directory(f"results/numeric/{dataset}")
             try_to_make_directory(f"results/numeric/{dataset}/{model}")
@@ -102,6 +104,7 @@ def main():
             pipeline_result.save_to_directory(f"results/{dataset}/{model}/{target_train.split('.')[0]}")
 
         else:
+
             try_to_make_directory(f"results160/numeric")
             try_to_make_directory(f"results160/numeric/{dataset}")
             try_to_make_directory(f"results160/numeric/{dataset}/{model}")
