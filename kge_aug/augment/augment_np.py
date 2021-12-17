@@ -14,7 +14,7 @@ parser.add_argument('--levels', default='3', metavar='',
                     help='How many levels to run?')
 args = parser.parse_args()
 
-### Read configuration
+# Read configuration
 home = os.environ['HOME']
 dataset = args.dataset
 modes = args.mode.split(',')

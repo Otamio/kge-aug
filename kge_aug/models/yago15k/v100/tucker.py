@@ -1,10 +1,8 @@
 from pykeen.pipeline import pipeline
-from kge_aug.models import constants, get_data
+from kge_aug.models import constants
 
 
-def get_pipeline(dataset, training_fname):
-
-    training, testing, validation = get_data.get(dataset, training_fname)
+def get_pipeline(training, testing, validation):
 
     return pipeline(
         training_triples_factory=training,

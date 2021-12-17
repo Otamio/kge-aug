@@ -8,14 +8,21 @@ dataset_path_mapping = {
     'yago15k': constants.dataset_yago15k
 }
 
+target_path_mapping = {
+    'vanilla': constants.link_prediction_path,
+    'lp': constants.link_prediction_path_processed,
+    'np': constants.numeric_prediction_path
+}
 
-def get(dataset, training_fname):
+
+def get(dataset, target, training_fname):
 
     dataset_path = dataset_path_mapping[dataset]
+    target_path = target_path_mapping[target]
 
     if pykeen.get_version() == "1.0.0":
 
-        training = TriplesFactory(path=f"{dataset_path}/{training_fname}")
+        training = TriplesFactory(path=f"{dataset_path}/{target_path}/{training_fname}")
         testing = TriplesFactory(
             path=f"{dataset_path}/test.tsv",
             entity_to_id=training.entity_to_id,
@@ -29,7 +36,7 @@ def get(dataset, training_fname):
 
     else:
 
-        training = TriplesFactory.from_path(f"{dataset_path}/{training_fname}")
+        training = TriplesFactory.from_path(f"{dataset_path}/{target_path}/{training_fname}")
         testing = TriplesFactory.from_path(
             f"{dataset_path}/test.tsv",
             entity_to_id=training.entity_to_id,

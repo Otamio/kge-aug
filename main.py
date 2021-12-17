@@ -1,6 +1,7 @@
 import sys
 import os
 import pykeen
+from kge_aug.models import get_data
 
 
 def get_model_mapping(dataset):
@@ -32,8 +33,10 @@ def main():
     dataset = sys.argv[1]
     model = sys.argv[2]
     model_mapping = get_model_mapping(dataset)
-    target_train = sys.argv[3] if len(sys.argv) > 3 else "train.tsv"
-    pipeline_result = model_mapping[model.lower()].get_pipeline(dataset, target_train)
+    target = sys.argv[3]
+    target_train = sys.argv[4] if len(sys.argv) > 4 else "train.tsv"
+    training, testing, validation = get_data.get(dataset, target, target_train)
+    pipeline_result = model_mapping[model.lower()].get_pipeline(training, testing, validation)
     
     if pykeen.get_version() == "1.0.0":
 
