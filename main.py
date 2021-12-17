@@ -2,6 +2,7 @@ import sys
 import os
 import pykeen
 from kge_aug.models import get_data
+from pykeen.models.predict import get_tail_prediction_df
 
 
 def get_model_mapping(dataset):
@@ -95,6 +96,13 @@ def main():
         pipeline_result = model_mapping[model.lower()].get_pipeline(training, testing, validation)
 
         if pykeen.get_version() == "1.0.0":
+
+            import pandas as pd
+            test = pd.read_csv(f"datasets/{dataset}/numeric/test", sep='\t', header=None)
+            test[0] = test[0].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
+            test[1] = test[1].apply(lambda x: x if not "com" in x else x.split("com")[1][:-1])
+            test[1] = test[1].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
+            test[1] = test[1].apply(lambda x: 'Interval-' + x)
 
             try_to_make_directory(f"results/numeric")
             try_to_make_directory(f"results/numeric/{dataset}")
