@@ -17,5 +17,5 @@ dataset_yago15k: Final = "datasets/yago15k"
 
 # dataset positions
 link_prediction_path: Final = "data"
-numeric_predciction_path: Final = "numeric"
+numeric_prediction_path: Final = "numeric"
 link_prediction_path_processed: Final = "processed"
