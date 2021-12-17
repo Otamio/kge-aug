@@ -19,7 +19,7 @@ def get_pipeline(training, testing, validation):
         ),
         training_loop='sLCWA',
         training_kwargs=dict(
-            num_epochs=constants.epochs,
+            num_epochs=60,
             batch_size=512,
             label_smoothing=0.0
         ),
