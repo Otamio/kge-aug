@@ -5,9 +5,9 @@ from kge_aug.models import constants
 def get_pipeline(training, testing, validation):
 
     return pipeline(
-        training_triples_factory=training,
-        testing_triples_factory=testing,
-        validation_triples_factory=validation,
+        training=training,
+        testing=testing,
+        validation=validation,
         dataset_kwargs=dict(
             create_inverse_triples=False
         ),

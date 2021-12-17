@@ -61,13 +61,13 @@ def get(dataset, target, training_fname):
                 relation_to_id=training.relation_to_id
             )
         else:
-            validation = TriplesFactory(
-                path=f"{dataset_path}/numeric/dummy.tsv",
+            validation = TriplesFactory.from_path(
+                f"{dataset_path}/numeric/dummy.tsv",
                 entity_to_id=training.entity_to_id,
                 relation_to_id=training.relation_to_id
             )
-            testing = TriplesFactory(
-                path=f"{dataset_path}/numeric/dummy.tsv",
+            testing = TriplesFactory.from_path(
+                f"{dataset_path}/numeric/dummy.tsv",
                 entity_to_id=training.entity_to_id,
                 relation_to_id=training.relation_to_id
             )
