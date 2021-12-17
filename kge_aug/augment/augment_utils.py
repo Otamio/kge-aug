@@ -81,13 +81,13 @@ def get_data_np(dataset):
     '''
     Get the entity file and literal file for
     '''
-    entities = pd.read_csv(f'NP/{dataset}/data/train_kge', sep='\t', header=None)
+    entities = pd.read_csv(f'datasets/{dataset}/numeric/train_kge', sep='\t', header=None)
     entities[0] = entities[0].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
     entities[1] = entities[1].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
     entities[2] = entities[2].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
     entities.columns = ['node1', 'label', 'node2']
 
-    values = pd.read_csv(f'NP/{dataset}/data/train_100', sep='\t', header=None)
+    values = pd.read_csv(f'NP/{dataset}/numeric/train_100', sep='\t', header=None)
     values[0] = values[0].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
     values[1] = values[1].apply(lambda x: x if not "com" in x else x.split("com")[1][:-1])
     values[1] = values[1].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
@@ -529,7 +529,7 @@ def augment_np(entities, values, dataset, mode, bins=None, levels=3):
 
         import json
         try:
-            os.mkdir(f'NP/{dataset}/stats')
+            os.mkdir(f'datasets/{dataset}/stats')
         except:
             pass
         with open(f'NP/{dataset}/stats/train_{mode}.json', 'w+') as fd:
@@ -541,10 +541,10 @@ def augment_np(entities, values, dataset, mode, bins=None, levels=3):
             pass
 
         # Write the original version
-        pd.concat([entities, numeric_edges_processed]).to_csv(f'NP/{dataset}/processed/train_{mode}.tsv',
+        pd.concat([entities, numeric_edges_processed]).to_csv(f'datasets/{dataset}/numeric/train_{mode}.tsv',
                                                               sep='\t', header=None, index=None)
 
         # Write the chaining version
         pd.concat([entities, numeric_edges_processed,
-                   pd.DataFrame(qnode_edges)]).to_csv(f'NP/{dataset}/processed/train_{mode}_Chain.tsv',
+                   pd.DataFrame(qnode_edges)]).to_csv(f'datasets/{dataset}/numeric/train_{mode}_Chain.tsv',
                                                       sep='\t', header=None, index=None)
