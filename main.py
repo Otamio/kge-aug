@@ -97,13 +97,6 @@ def main():
 
         if pykeen.get_version() == "1.0.0":
 
-            import pandas as pd
-            test = pd.read_csv(f"datasets/{dataset}/numeric/test", sep='\t', header=None)
-            test[0] = test[0].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
-            test[1] = test[1].apply(lambda x: x if not "com" in x else x.split("com")[1][:-1])
-            test[1] = test[1].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
-            test[1] = test[1].apply(lambda x: 'Interval-' + x)
-
             try_to_make_directory(f"results/numeric")
             try_to_make_directory(f"results/numeric/{dataset}")
             try_to_make_directory(f"results/numeric/{dataset}/{model}")
@@ -111,6 +104,26 @@ def main():
             pipeline_result.save_to_directory(f"results/numeric/{dataset}/{model}/{target_train.split('.')[0]}")
 
         else:
+
+            import pandas as pd
+            test = pd.read_csv(f"datasets/{dataset}/numeric/test", sep='\t', header=None)
+            test[0] = test[0].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
+            test[1] = test[1].apply(lambda x: x if not "com" in x else x.split("com")[1][:-1])
+            test[1] = test[1].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
+            test[1] = test[1].apply(lambda x: 'Interval-' + x)
+            test[3] = None
+
+            import json
+            from tqdm import tqdm
+            with open(f"datasets/{dataset}/stats/{target_train.split('.')[0]}.tsv") as fd:
+                medians = json.load(fd)
+
+            for i, row in tqdm(test.iterrows()):
+                for j, row_inner in get_tail_prediction_df(pipeline_result.model, row[0], row[1],
+                                                           triples_factory=pipeline_result.training).iterrows():
+                    if row[1] in row_inner['tail_label']:
+                        row[3] = medians[row_inner['tail_label']]
+                        break
 
             try_to_make_directory(f"results160/numeric")
             try_to_make_directory(f"results160/numeric/{dataset}")
