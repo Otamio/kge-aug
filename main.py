@@ -46,13 +46,13 @@ def main():
 
     dataset = sys.argv[1]
     model = sys.argv[2]
-    model_mapping = get_model_mapping(dataset)
     target = sys.argv[3]
     target_train = sys.argv[4] if len(sys.argv) > 4 else "train.tsv"
 
-    if target != 'np': # Running link prediction
+    if target != 'np':  # Running link prediction
 
         training, testing, validation = get_data.get(dataset, target, target_train)
+        model_mapping = get_model_mapping(dataset)
         pipeline_result = model_mapping[model.lower()].get_pipeline(training, testing, validation)
 
         if pykeen.get_version() == "1.0.0":
@@ -91,7 +91,8 @@ def main():
     else:
 
         training = get_data.get_np(dataset, target_train)
-        pipeline_result = get_model_mapping_np[model.lower()].get_pipeline(training)
+        model_mapping = get_model_mapping_np(dataset)
+        pipeline_result = model_mapping[model.lower()].get_pipeline(training)
         if pykeen.get_version() == "1.0.0":
             metrics = pipeline_result.metric_results
             try_to_make_directory(f"results/numeric")
