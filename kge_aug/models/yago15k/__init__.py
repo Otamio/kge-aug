@@ -19,4 +19,4 @@ else:
     Complex = v105.complex
     Conve = v105.conve
     Rotate = v105.rotate
-    Tucker = None
+    Tucker = v105.tucker
