@@ -91,7 +91,7 @@ def main():
     else:
 
         training = get_data.get_np(dataset, target_train)
-        model_mapping = get_model_mapping_np(dataset)
+        model_mapping = get_model_mapping_np()
         pipeline_result = model_mapping[model.lower()].get_pipeline(training)
         if pykeen.get_version() == "1.0.0":
             metrics = pipeline_result.metric_results
