@@ -49,3 +49,13 @@ def get(dataset, target, training_fname):
         )
 
     return training, testing, validation
+
+
+def get_np(dataset, training_fname):
+
+    dataset_path = dataset_path_mapping[dataset]
+    if pykeen.get_version() == "1.0.0":
+        training = TriplesFactory(path=f"{dataset_path}/numeric/{training_fname}")
+    else:
+        training = TriplesFactory.from_path(f"{dataset_path}/numeric/{training_fname}")
+    return training

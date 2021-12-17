@@ -2,10 +2,12 @@ from pykeen.pipeline import pipeline
 from kge_aug.models import constants
 
 
-def get_pipeline(training):
+def get_pipeline(training, testing, validation):
 
     return pipeline(
         training_triples_factory=training,
+        testing_triples_factory=testing,
+        validation_triples_factory=validation,
         dataset_kwargs=dict(
             create_inverse_triples=True
         ),
@@ -31,5 +33,14 @@ def get_pipeline(training):
             lr=0.0014058561550531544
         ),
         regularizer="no",
-        evaluator="no",
+        evaluator="rankbased",
+        evaluator_kwargs=dict(
+            filtered=True
+        ),
+        stopper='early',
+        stopper_kwargs=dict(
+            metric=constants.metric,
+            patience=constants.patience,
+            delta=constants.delta
+        )
     )
