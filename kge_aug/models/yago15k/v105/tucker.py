@@ -20,8 +20,7 @@ def get_pipeline(dataset, training_fname):
             dropout_2=0.46634205793718553,
             embedding_dim=128,
             relation_dim=64,
-            apply_batch_normalization=True,
-            automatic_memory_optimization=True
+            apply_batch_normalization=True
         ),
         training_loop='LCWA',
         training_kwargs=dict(
@@ -43,6 +42,6 @@ def get_pipeline(dataset, training_fname):
         stopper_kwargs=dict(
             metric=constants.metric,
             patience=constants.patience,
-            delta=constants.delta
+            relative_delta=constants.relative_delta
         )
     )
