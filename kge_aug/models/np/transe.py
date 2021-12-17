@@ -14,8 +14,7 @@ def get_pipeline(training, testing, validation):
         model='TransE',
         model_kwargs=dict(
             embedding_dim=128,
-            scoring_fct_norm=1,
-            automatic_memory_optimization=True
+            scoring_fct_norm=1
         ),
         training_loop='sLCWA',
         training_kwargs=dict(
