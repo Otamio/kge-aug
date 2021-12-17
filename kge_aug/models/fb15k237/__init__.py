@@ -1,5 +1,4 @@
-__all__ = ['transe', 'conve', 'tucker', 'rotate',
-           'complex', 'distmult', 'rotate']
+__all__ = ['Transe', 'Conve', 'Tucker', 'Complex', 'Distmult', 'Rotate']
 
 import pykeen
 
@@ -8,13 +7,16 @@ import kge_aug.models.fb15k237.v105 as v105
 
 
 if pykeen.get_version() == "1.0.0":
+
     Transe = v100.transe
     Distmult = v100.distmult
     Complex = v100.complex
     Conve = v100.conve
     Rotate = v100.rotate
     Tucker = v100.tucker
+
 else:
+
     Transe = v105.transe
     Distmult = v105.distmult
     Complex = v105.complex
