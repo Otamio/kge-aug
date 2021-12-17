@@ -23,29 +23,53 @@ def get(dataset, target, training_fname):
     if pykeen.get_version() == "1.0.0":
 
         training = TriplesFactory(path=f"{dataset_path}/{target_path}/{training_fname}")
-        testing = TriplesFactory(
-            path=f"{dataset_path}/data/test.tsv",
-            entity_to_id=training.entity_to_id,
-            relation_to_id=training.relation_to_id
-        )
-        validation = TriplesFactory(
-            path=f"{dataset_path}/data/valid.tsv",
-            entity_to_id=training.entity_to_id,
-            relation_to_id=training.relation_to_id
-        )
+        if target != "np":
+            validation = TriplesFactory(
+                path=f"{dataset_path}/data/valid.tsv",
+                entity_to_id=training.entity_to_id,
+                relation_to_id=training.relation_to_id
+            )
+            testing = TriplesFactory(
+                path=f"{dataset_path}/data/test.tsv",
+                entity_to_id=training.entity_to_id,
+                relation_to_id=training.relation_to_id
+            )
+        else:
+            validation = TriplesFactory(
+                path=f"{dataset_path}/numeric/dummy.tsv",
+                entity_to_id=training.entity_to_id,
+                relation_to_id=training.relation_to_id
+            )
+            testing = TriplesFactory(
+                path=f"{dataset_path}/numeric/dummy.tsv",
+                entity_to_id=training.entity_to_id,
+                relation_to_id=training.relation_to_id
+            )
 
     else:
 
         training = TriplesFactory.from_path(f"{dataset_path}/{target_path}/{training_fname}")
-        testing = TriplesFactory.from_path(
-            f"{dataset_path}/data/test.tsv",
-            entity_to_id=training.entity_to_id,
-            relation_to_id=training.relation_to_id
-        )
-        validation = TriplesFactory.from_path(
-            f"{dataset_path}/data/valid.tsv",
-            entity_to_id=training.entity_to_id,
-            relation_to_id=training.relation_to_id
-        )
+        if target != "np":
+            testing = TriplesFactory.from_path(
+                f"{dataset_path}/data/test.tsv",
+                entity_to_id=training.entity_to_id,
+                relation_to_id=training.relation_to_id
+            )
+            validation = TriplesFactory.from_path(
+                f"{dataset_path}/data/valid.tsv",
+                entity_to_id=training.entity_to_id,
+                relation_to_id=training.relation_to_id
+            )
+        else:
+            validation = TriplesFactory(
+                path=f"{dataset_path}/numeric/dummy.tsv",
+                entity_to_id=training.entity_to_id,
+                relation_to_id=training.relation_to_id
+            )
+            testing = TriplesFactory(
+                path=f"{dataset_path}/numeric/dummy.tsv",
+                entity_to_id=training.entity_to_id,
+                relation_to_id=training.relation_to_id
+            )
 
     return training, testing, validation

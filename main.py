@@ -49,11 +49,9 @@ def main():
     target = sys.argv[3]
     target_train = sys.argv[4] if len(sys.argv) > 4 else "train.tsv"
 
-    training, testing, validation = get_data.get(dataset, target, target_train)
-
-
     if target != 'np':  # Running link prediction
 
+        training, testing, validation = get_data.get(dataset, target, target_train)
         model_mapping = get_model_mapping(dataset)
         pipeline_result = model_mapping[model.lower()].get_pipeline(training, testing, validation)
 
@@ -92,6 +90,7 @@ def main():
 
     else:
 
+        training, testing, validation = get_data.get(dataset, target, target_train)
         model_mapping = get_model_mapping_np()
         pipeline_result = model_mapping[model.lower()].get_pipeline(training, testing, validation)
 

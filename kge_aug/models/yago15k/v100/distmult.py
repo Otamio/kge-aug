@@ -18,7 +18,7 @@ def get_pipeline(training, testing, validation):
         ),
         training_loop='LCWA',
         training_kwargs=dict(
-            num_epochs=constants.epochs,
+            num_epochs=60,
             batch_size=256,
             label_smoothing=0.08094657004944494
         ),
@@ -27,14 +27,5 @@ def get_pipeline(training, testing, validation):
         optimizer_kwargs=dict(
             lr=0.007525067744232913
         ),
-        regularizer='no',
-        evaluator_kwargs=dict(
-            filtered=True
-        ),
-        stopper='early',
-        stopper_kwargs=dict(
-            metric=constants.metric,
-            patience=constants.patience,
-            delta=constants.delta
-        )
+        regularizer='no'
     )
