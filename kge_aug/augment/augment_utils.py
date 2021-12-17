@@ -87,7 +87,7 @@ def get_data_np(dataset):
     entities[2] = entities[2].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
     entities.columns = ['node1', 'label', 'node2']
 
-    values = pd.read_csv(f'NP/{dataset}/numeric/train_100', sep='\t', header=None)
+    values = pd.read_csv(f'datasets/{dataset}/numeric/train_100', sep='\t', header=None)
     values[0] = values[0].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
     values[1] = values[1].apply(lambda x: x if not "com" in x else x.split("com")[1][:-1])
     values[1] = values[1].apply(lambda x: x if not "org" in x else x.split("org")[1][:-1])
