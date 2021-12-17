@@ -2,9 +2,9 @@ from pykeen.pipeline import pipeline
 from kge_aug.models import constants, get_data
 
 
-def get_pipeline(training_fname="train.tsv"):
+def get_pipeline(dataset, training_fname="train.tsv"):
 
-    training, testing, validation = get_data.get(training_fname)
+    training, testing, validation = get_data.get(dataset, training_fname)
 
     return pipeline(
         training=training,

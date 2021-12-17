@@ -1,5 +1,4 @@
-__all__ = ['Transe', 'Conve', 'Tucker', 'Rotate',
-           'Complex', 'Distmult']
+__all__ = ['Transe', 'Conve', 'Tucker', 'Rotate', 'Complex', 'Distmult']
 
 import pykeen
 
