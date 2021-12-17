@@ -532,11 +532,11 @@ def augment_np(entities, values, dataset, mode, bins=None, levels=3):
             os.mkdir(f'datasets/{dataset}/stats')
         except:
             pass
-        with open(f'NP/{dataset}/stats/train_{mode}.json', 'w+') as fd:
+        with open(f'datasets/{dataset}/stats/train_{mode}.json', 'w+') as fd:
             json.dump(medians_dict, fd, indent=2)
 
         try:
-            os.mkdir(f'NP/{dataset}/processed')
+            os.mkdir(f'datasets/{dataset}/processed')
         except:
             pass
 
