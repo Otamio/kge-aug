@@ -13,7 +13,7 @@ def get_model_mapping(dataset):
     return {
         "transe": Transe,
         "distmult": Distmult,
-        "complex.py": Complex,
+        "complex": Complex,
         "conve": Conve,
         "rotate": Rotate,
         "tucker": Tucker,

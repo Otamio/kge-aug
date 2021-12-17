@@ -15,8 +15,7 @@ def get_pipeline(dataset, training_fname="train.tsv"):
         ),
         model='ComplEx',
         model_kwargs=dict(
-            embedding_dim=256,
-            # automatic_memory_optimization=True
+            embedding_dim=256
         ),
         training_loop='LCWA',
         training_kwargs=dict(
