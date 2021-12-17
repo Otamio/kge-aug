@@ -115,7 +115,7 @@ def main():
 
             import json
             from tqdm import tqdm
-            with open(f"datasets/{dataset}/stats/{target_train.split('.')[0]}.tsv") as fd:
+            with open(f"datasets/{dataset}/stats/{target_train.split('.')[0]}.json") as fd:
                 medians = json.load(fd)
 
             for i, row in tqdm(test.iterrows()):
