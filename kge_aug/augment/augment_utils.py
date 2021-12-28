@@ -116,7 +116,7 @@ def create_property_labels(property_, unit):
     return pnodes_collect, pnodes_edges, pnodes_label_edges
 
 
-def create_numeric_edges(df_sli, bins, qnodes_collect):
+def create_numeric_edges(df_sli, bins, qnodes_collect, suffix=""):
     """ Create numeric edges """
     numeric_edges = []
     if len(qnodes_collect) == 0:
@@ -130,7 +130,7 @@ def create_numeric_edges(df_sli, bins, qnodes_collect):
             _qnode = qnodes_collect[0]
         numeric_edges.append({
             'node1': row['node1'],
-            'label': _pnode,
+            'label': f"{_pnode}{suffix}",
             'node2': _qnode
         })
     return numeric_edges
@@ -146,7 +146,6 @@ def generate_edges(df_sli, property_, mode, num_bins=None, unit=None):
     '''
     bins = get_edge_starts(df_sli, mode, num_bins)
 
-    # print(property_, bins)
     # Generate the qnode
     qnodes_collect, qnodes_label_edges = create_literal_labels(bins, property_)
 
@@ -168,36 +167,36 @@ def generate_edges_dualLink(df_sli, property_, num_bins, unit=None, mode='Quanti
         bs = get_edge_starts(df_sli, 'QuantileDual', num_bins * 2)
     else:
         bs = get_edge_starts(df_sli, 'Fixed', num_bins * 2)
-    bin_A, bin_B = bs[0::2], bs[1::2][:-1]
+    bins_a, bins_b = bs[0::2], bs[1::2][:-1]
 
-    qnodes_collect_A, qnodes_label_edges_A = create_literal_labels(bin_A, property_)
-    qnodes_collect_B, qnodes_label_edges_B = create_literal_labels(bin_B, property_)
+    qnodes_collect_a, qnodes_label_edges_a = create_literal_labels(bins_a, property_)
+    qnodes_collect_b, qnodes_label_edges_b = create_literal_labels(bins_b, property_)
 
     qnodes_collect_all = []
-    for i in range(len(qnodes_collect_B)):
-        qnodes_collect_all.append(qnodes_collect_A[i])
-        qnodes_collect_all.append(qnodes_collect_B[i])
-    if len(qnodes_collect_A) > len(qnodes_collect_B):
-        qnodes_collect_all += qnodes_collect_A[len(qnodes_collect_B):]
+    for i in range(len(qnodes_collect_a)):
+        qnodes_collect_all.append(qnodes_collect_a[i])
+        qnodes_collect_all.append(qnodes_collect_b[i])
+    if len(qnodes_collect_a) > len(qnodes_collect_b):
+        qnodes_collect_all += qnodes_collect_a[len(qnodes_collect_b):]
 
     qnode_chain = create_chain(qnodes_collect_all, property_)
 
     pnodes_collect, pnodes_edges, pnodes_label_edges = create_property_labels(property_, unit)
 
-    numeric_edges_A = create_numeric_edges(df_sli, bin_A, qnodes_collect_A)
-    numeric_edges_B = create_numeric_edges(df_sli, bin_B, qnodes_collect_B)
+    numeric_edges_a = create_numeric_edges(df_sli, bins_a, qnodes_collect_a, suffix="left")
+    numeric_edges_b = create_numeric_edges(df_sli, bins_b, qnodes_collect_b, suffix="right")
 
     # qnode_chain = qnode_chain_A + qnode_chain_B
-    qnodes_label_edges = qnodes_label_edges_A + qnodes_label_edges_B
-    numeric_edges = numeric_edges_A + numeric_edges_B
+    qnodes_label_edges = qnodes_label_edges_a + qnodes_label_edges_b
+    numeric_edges = numeric_edges_a + numeric_edges_b
 
     return qnode_chain, qnodes_label_edges, pnodes_edges, pnodes_label_edges, numeric_edges
 
 
 def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Hierarchy'):
-    '''
+    """
     Link Hierarchy
-    '''
+    """
     from functools import reduce
 
     if "Fixed" in mode:
@@ -205,21 +204,21 @@ def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Hiera
     else:
         bs = get_edge_starts(df_sli, 'Quantile', 2 ** levels)
     bs_list = []
-    for l in range(levels + 1):
-        bs_list.append(bs[0::2 ** l])
+    for lv in range(levels + 1):
+        bs_list.append(bs[0::2 ** lv])
 
     qnodes_collect_list, qnodes_label_edges_list = list(), list()
-    for l in range(levels + 1):
-        _a, _b = create_literal_labels(bs_list[l], property_)
+    for lv in range(levels + 1):
+        _a, _b = create_literal_labels(bs_list[lv], property_)
         qnodes_collect_list.append(_a)
         qnodes_label_edges_list.append(_b)
 
     qnode_chain_list = list()
-    for l in range(levels + 1):
-        qnode_chain_list.append(create_chain(qnodes_collect_list[l], property_))
-    for l in range(levels - 1):
-        qnode_chain_list.append(create_hierarchy(qnodes_collect_list[l],
-                                                 qnodes_collect_list[l + 1],
+    for lv in range(levels + 1):
+        qnode_chain_list.append(create_chain(qnodes_collect_list[lv], property_))
+    for lv in range(levels - 1):
+        qnode_chain_list.append(create_hierarchy(qnodes_collect_list[lv],
+                                                 qnodes_collect_list[lv + 1],
                                                  property_))
 
     pnodes_collect, pnodes_edges, pnodes_label_edges = create_property_labels(property_, unit)
@@ -240,25 +239,26 @@ def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Hiera
 ##########################################
 
 def create_new_edges(df, mode, num_bins=None, num_levels=None):
-    '''
+    """
     Create the new edges based on the partitioned data
-    '''
+    """
     qnodes_edges = []
-    qnodes_label_edges = []
+    qnodes_label_edges = []  # (metadata) entity labels
     pnodes_edges = []
-    pnodes_label_edges = []
+    pnodes_label_edges = []  # (metadata) property labels
     numeric_edges = []
-    numeric_edges_raw = None
+    numeric_edges_raw = None  # numeric edges (node2 as numbers)
 
     for property_ in tqdm(df['label'].unique()):
 
         try:
+            # Iterate through each numeric property
             sli = df[df['label'] == property_]
             if len(sli) < 100:
                 continue
 
             if mode == "QuantileDual" or mode == "FixedDual":
-                assert (not num_bins is None)
+                assert (num_bins is not None)
                 a, b, c, d, e = generate_edges_dualLink(sli, property_, num_bins, mode)
             elif mode == "Hierarchy" or mode == "FixedHierarchy":
                 a, b, c, d, e = generate_edges_hierarchy(sli, property_, num_levels, mode)
