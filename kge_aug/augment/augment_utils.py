@@ -34,13 +34,13 @@ def create_chain(qnodes_collect, property_, reverse_chain=True):
     """
     qnode_chain = []
     for i in range(len(qnodes_collect)):
-        if i > 0:
+        if reverse_chain and i > 0:
             qnode_chain.append({
                 'node1': qnodes_collect[i],
                 'label': property_ + '_prev',
                 'node2': qnodes_collect[i - 1]
             })
-        if reverse_chain and i < len(qnodes_collect) - 1:
+        if i < len(qnodes_collect) - 1:
             qnode_chain.append({
                 'node1': qnodes_collect[i],
                 'label': property_ + '_next',
