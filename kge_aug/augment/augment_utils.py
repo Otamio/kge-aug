@@ -239,7 +239,7 @@ def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Hiera
 #    Edge Creation Functions
 ##########################################
 
-def create_new_edges(df, MODE, num_bins=None, num_levels=None):
+def create_new_edges(df, mode, num_bins=None, num_levels=None):
     '''
     Create the new edges based on the partitioned data
     '''
@@ -257,23 +257,21 @@ def create_new_edges(df, MODE, num_bins=None, num_levels=None):
             if len(sli) < 100:
                 continue
 
-            if MODE == "QuantileDual" or MODE == "FixedDual":
+            if mode == "QuantileDual" or mode == "FixedDual":
                 assert (not num_bins is None)
-                a, b, c, d, e = generate_edges_dualLink(sli, property_, num_bins, MODE)
-            elif MODE == "Hierarchy" or MODE == "FixedHierarchy":
-                a, b, c, d, e = generate_edges_hierarchy(sli, property_, num_levels, MODE)
+                a, b, c, d, e = generate_edges_dualLink(sli, property_, num_bins, mode)
+            elif mode == "Hierarchy" or mode == "FixedHierarchy":
+                a, b, c, d, e = generate_edges_hierarchy(sli, property_, num_levels, mode)
             else:
-                a, b, c, d, e = generate_edges(sli, property_, MODE, num_bins)
+                a, b, c, d, e = generate_edges(sli, property_, mode, num_bins)
 
             qnodes_edges += a
             qnodes_label_edges += b
             pnodes_edges += c
             pnodes_label_edges += d
             numeric_edges += e
-            if numeric_edges_raw is None:
-                numeric_edges_raw = sli
-            else:
-                numeric_edges_raw = pd.concat([numeric_edges_raw, sli])
+            numeric_edges_raw = sli if numeric_edges_raw is None else pd.concat([numeric_edges_raw, sli])
+
         except Exception as e:
             print(f"Error encountered at property {property_}. Size {len(sli)}. Continue...")
             import traceback
