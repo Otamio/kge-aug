@@ -1,5 +1,9 @@
-from augment_utils import *
+from augment_main import augment_np
+from loader import get_data_np
 import argparse
+from constant import *
+import os
+
 
 parser = argparse.ArgumentParser(
     description='Create literals and append to graph'
@@ -23,12 +27,6 @@ levels = int(args.levels)
 
 if modes[0] == "All":
     modes = SUPPORTED_MODE
-
-if dataset == "WikidataDWD":
-    try:
-        modes.remove("Jenks")
-    except:
-        pass
 
 # Get data
 entities, values = get_data_np(dataset)

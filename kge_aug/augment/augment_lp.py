@@ -1,5 +1,8 @@
 import argparse
-from augment_utils import *
+from augment_main import augment_lp
+from loader import get_data_lp
+from constant import *
+import os
 
 
 parser = argparse.ArgumentParser(
@@ -24,12 +27,6 @@ levels = int(args.levels)
 
 if modes[0] == "All":
     modes = SUPPORTED_MODE
-
-if dataset == "WikidataDWD":
-    try:
-        modes.remove("Jenks")
-    except:
-        pass
 
 # Get data
 entities, values = get_data_lp(dataset)
