@@ -140,11 +140,10 @@ def create_numeric_edges(df_sli, bins, qnodes_collect, suffix=""):
 ##########################################
 
 def generate_edges_single(df_sli, property_, num_bins=None, unit=None, mode='Quantile_Single'):
-    '''
+    """
     Generate a 1D partition of literal nodes and add them to entity nodes
-    '''
+    """
     bins = get_edge_starts(df_sli, mode, num_bins)
-
     # Generate the qnode
     qnodes_collect, qnodes_label_edges = create_literal_labels(bins, property_)
 
@@ -159,17 +158,11 @@ def generate_edges_single(df_sli, property_, num_bins=None, unit=None, mode='Qua
 
 
 def generate_edges_overlapping(df_sli, property_, num_bins=None, unit=None, mode='Quantile_Overlap'):
-    '''
+    """
     One numeric edge = 2 links
-    '''
+    """
     bs = get_edge_starts(df_sli, mode, num_bins)
-    # print(bs)
-    bins_a, bins_b = bs[0::2], [bs[0]] + bs[1::2][:-1]
-    if len(bins_a) == len(bins_b):
-        bins_b.append(bs[-1])
-    else:
-        bins_a.append(bs[-1])
-    # print(bins_a, bins_b)
+    bins_a, bins_b = bs[0::2], np.concatenate(([bs[0]], bs[1::2]))
 
     qnodes_collect_a, qnodes_label_edges_a = create_literal_labels(bins_a, property_)
     qnodes_collect_b, qnodes_label_edges_b = create_literal_labels(bins_b, property_)
@@ -185,8 +178,8 @@ def generate_edges_overlapping(df_sli, property_, num_bins=None, unit=None, mode
 
     pnodes_collect, pnodes_edges, pnodes_label_edges = create_property_labels(property_, unit)
 
-    numeric_edges_a = create_numeric_edges(df_sli, bins_a, qnodes_collect_a, suffix="_left")
-    numeric_edges_b = create_numeric_edges(df_sli, bins_b, qnodes_collect_b, suffix="_right")
+    numeric_edges_a = create_numeric_edges(df_sli, bins_a, qnodes_collect_a, suffix="_right")
+    numeric_edges_b = create_numeric_edges(df_sli, bins_b, qnodes_collect_b, suffix="_left")
 
     # qnode_chain = qnode_chain_a + qnode_chain_a
     qnodes_label_edges = qnodes_label_edges_a + qnodes_label_edges_b
@@ -237,7 +230,7 @@ def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Quant
 #    Edge Creation Functions
 ##########################################
 
-def create_new_edges(df, mode, num_bins=None, num_levels=None):
+def create_new_edges(df, mode, num_bins=None):
     """
     Create the new edges based on the partitioned data
     """
@@ -263,8 +256,9 @@ def create_new_edges(df, mode, num_bins=None, num_levels=None):
                 assert(num_bins is not None)
                 a, b, c, d, e = generate_edges_overlapping(sli, property_, num_bins=num_bins, unit=None, mode=mode)
             elif mode.endswith("Hierarchy"):
-                assert(num_levels is not None)
-                a, b, c, d, e = generate_edges_hierarchy(sli, property_, levels=num_levels, unit=None, mode=mode)
+                assert(num_bins is not None)
+                a, b, c, d, e = generate_edges_hierarchy(sli, property_, levels=int(np.log2(num_bins)),
+                                                         unit=None, mode=mode)
             else:
                 print("Unsupported data type!")
                 continue

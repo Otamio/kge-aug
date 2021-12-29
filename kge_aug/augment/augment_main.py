@@ -3,30 +3,45 @@ from augment_utils import *
 from collections import defaultdict
 import os
 import json
+import shutil
 
+
+def try_to_make_dir(folder):
+    try:
+        os.mkdir(folder)
+    except FileExistsError:
+        pass
 
 ##########################################
 #    Main Function
 ##########################################
 
-def augment_lp(entities, df, dataset, mode, bins=None, levels=3):
 
-    suffix = bins if bins is not None else levels
+def augment_lp(entities, df, dataset, mode, bins=None):
+
+    suffix = int(np.log2(bins)) if mode.endswith("Hierarchy") else bins
 
     if mode in CHAINABLE_MODE:
 
         print(f'Running mode {mode}')
 
-        numeric_edges_processed, _, qnode_edges = create_new_edges(df, mode, bins, levels)
+        numeric_edges_processed, _, qnode_edges = create_new_edges(df, mode, bins)
 
         # Write the augmented version (without chain)
-        pd.concat([entities, numeric_edges_processed])\
-            .to_csv(f'datasets/{dataset}/processed/train_{mapping_no_chain[mode]}_{suffix}.txt',
-                    sep='\t', header=False, index=False)
+        target = f'datasets/{dataset}/processed/{dataset}_{mapping_no_chain[mode]}_{suffix}'
+        try_to_make_dir(target)
+        pd.concat([entities, numeric_edges_processed]) \
+            .to_csv(f'{target}/train.txt', sep='\t', header=False, index=False)
+        shutil.copy(f'datasets/{dataset}/data/valid.tsv', f'{target}/valid.txt')
+        shutil.copy(f'datasets/{dataset}/data/test.tsv', f'{target}/test.txt')
+
         # Write the augmented version (with chain)
-        pd.concat([entities, numeric_edges_processed, pd.DataFrame(qnode_edges)])\
-            .to_csv(f'datasets/{dataset}/processed/train_{mapping_chain[mode]}_{suffix}.txt',
-                    sep='\t', header=False, index=False)
+        target = f'datasets/{dataset}/processed/{dataset}_{mapping_chain[mode]}_{suffix}'
+        try_to_make_dir(target)
+        pd.concat([entities, numeric_edges_processed, pd.DataFrame(qnode_edges)]) \
+            .to_csv(f'{target}/train.txt', sep='\t', header=False, index=False)
+        shutil.copy(f'datasets/{dataset}/data/valid.tsv', f'{target}/valid.txt')
+        shutil.copy(f'datasets/{dataset}/data/test.tsv', f'{target}/test.txt')
 
 
 def augment_np(entities, values, dataset, mode, bins=None, levels=3):

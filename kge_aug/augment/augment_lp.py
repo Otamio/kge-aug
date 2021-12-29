@@ -3,6 +3,7 @@ from augment_main import augment_lp
 from loader import get_data_lp
 from constant import *
 import os
+import numpy as np
 
 
 parser = argparse.ArgumentParser(
@@ -14,8 +15,6 @@ parser.add_argument('--mode', default='All', metavar='',
                     help='which augmentation mode to run?')
 parser.add_argument('--bins', default='8', metavar='',
                     help='How many bins to run?')
-parser.add_argument('--levels', default='3', metavar='',
-                    help='How many levels to run?')
 args = parser.parse_args()
 
 # Read configuration
@@ -23,7 +22,6 @@ home = os.environ['HOME']
 dataset = args.dataset
 modes = args.mode.split(',')
 bins = int(args.bins)
-levels = int(args.levels)
 
 if modes[0] == "All":
     modes = SUPPORTED_MODE
@@ -33,4 +31,4 @@ entities, values = get_data_lp(dataset)
 
 for mode in modes:
     if mode in SUPPORTED_MODE:
-        augment_lp(entities, values, dataset, mode, bins, levels)
+        augment_lp(entities, values, dataset, mode, bins)
