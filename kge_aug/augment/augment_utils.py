@@ -13,16 +13,14 @@ def get_edge_starts(df_sli, mode, num_bins=None):
     """
     Get the start of each bin
     """
-    if mode == 'Quantile':
+    if mode.startswith('Quantile'):
         bins = get_bins_quantile(df_sli, num_bins)
-    elif mode == 'Fixed':
+    elif mode.startswith('Fixed'):
         bins = get_bins_fixed_length(df_sli, num_bins)
-    elif mode == 'Jenks':
+    elif mode.startswith('Jenks'):
         bins = get_bins_jenks(df_sli)
-    elif mode == 'Kde':
+    elif mode.startswith('Kde'):
         bins = get_bins_kde(df_sli)
-    elif mode == 'QuantileDual':
-        bins = get_bins_quantile(df_sli, num_bins)
     else:  # Unsupported Mode
         return None
     return bins
@@ -49,22 +47,23 @@ def create_chain(qnodes_collect, property_, reverse_chain=True):
     return qnode_chain
 
 
-def create_hierarchy(qnodes_collect_A, qnodes_collect_B, property_):
+def create_hierarchy(qnodes_collect_a, qnodes_collect_b, property_, reverse_relation=True):
     """
     create the hierarchy needed
     """
     qnode_hierarchy = []
-    for i in range(len(qnodes_collect_A)):
+    for i in range(len(qnodes_collect_a)):
         qnode_hierarchy.append({
-            'node1': qnodes_collect_A[i],
+            'node1': qnodes_collect_a[i],
             'label': property_ + '_is_subgroup_of',
-            'node2': qnodes_collect_B[i // 2]
+            'node2': qnodes_collect_b[i // 2]
         })
-        qnode_hierarchy.append({
-            'node1': qnodes_collect_B[i // 2],
-            'label': property_ + '_has_subgroup',
-            'node2': qnodes_collect_A[i]
-        })
+        if reverse_relation:
+            qnode_hierarchy.append({
+                'node1': qnodes_collect_b[i // 2],
+                'label': property_ + '_has_subgroup',
+                'node2': qnodes_collect_a[i]
+            })
     return qnode_hierarchy
 
 
@@ -140,7 +139,7 @@ def create_numeric_edges(df_sli, bins, qnodes_collect, suffix=""):
 #    Edge Generation Functions
 ##########################################
 
-def generate_edges(df_sli, property_, mode, num_bins=None, unit=None):
+def generate_edges_single(df_sli, property_, num_bins=None, unit=None, mode='Quantile_Single'):
     '''
     Generate a 1D partition of literal nodes and add them to entity nodes
     '''
@@ -150,7 +149,7 @@ def generate_edges(df_sli, property_, mode, num_bins=None, unit=None):
     qnodes_collect, qnodes_label_edges = create_literal_labels(bins, property_)
 
     # Connect with quantity nodes
-    qnode_chain = create_chain(qnodes_collect, property_)
+    qnode_chain = create_chain(qnodes_collect, property_, reverse_chain=False)
     # Generate the pnodes
     pnodes_collect, pnodes_edges, pnodes_label_edges = create_property_labels(property_, unit)
     # Generate numeric edges
@@ -159,15 +158,18 @@ def generate_edges(df_sli, property_, mode, num_bins=None, unit=None):
     return qnode_chain, qnodes_label_edges, pnodes_edges, pnodes_label_edges, numeric_edges
 
 
-def generate_edges_dualLink(df_sli, property_, num_bins, unit=None, mode='QuantileDual'):
+def generate_edges_overlapping(df_sli, property_, num_bins=None, unit=None, mode='Quantile_Overlap'):
     '''
     One numeric edge = 2 links
     '''
-    if 'Quantile' in mode:
-        bs = get_edge_starts(df_sli, 'QuantileDual', num_bins * 2)
+    bs = get_edge_starts(df_sli, mode, num_bins)
+    # print(bs)
+    bins_a, bins_b = bs[0::2], [bs[0]] + bs[1::2][:-1]
+    if len(bins_a) == len(bins_b):
+        bins_b.append(bs[-1])
     else:
-        bs = get_edge_starts(df_sli, 'Fixed', num_bins * 2)
-    bins_a, bins_b = bs[0::2], bs[1::2][:-1]
+        bins_a.append(bs[-1])
+    # print(bins_a, bins_b)
 
     qnodes_collect_a, qnodes_label_edges_a = create_literal_labels(bins_a, property_)
     qnodes_collect_b, qnodes_label_edges_b = create_literal_labels(bins_b, property_)
@@ -179,30 +181,27 @@ def generate_edges_dualLink(df_sli, property_, num_bins, unit=None, mode='Quanti
     if len(qnodes_collect_a) > len(qnodes_collect_b):
         qnodes_collect_all += qnodes_collect_a[len(qnodes_collect_b):]
 
-    qnode_chain = create_chain(qnodes_collect_all, property_)
+    qnode_chain = create_chain(qnodes_collect_all, property_, reverse_chain=False)
 
     pnodes_collect, pnodes_edges, pnodes_label_edges = create_property_labels(property_, unit)
 
-    numeric_edges_a = create_numeric_edges(df_sli, bins_a, qnodes_collect_a, suffix="left")
-    numeric_edges_b = create_numeric_edges(df_sli, bins_b, qnodes_collect_b, suffix="right")
+    numeric_edges_a = create_numeric_edges(df_sli, bins_a, qnodes_collect_a, suffix="_left")
+    numeric_edges_b = create_numeric_edges(df_sli, bins_b, qnodes_collect_b, suffix="_right")
 
-    # qnode_chain = qnode_chain_A + qnode_chain_B
+    # qnode_chain = qnode_chain_a + qnode_chain_a
     qnodes_label_edges = qnodes_label_edges_a + qnodes_label_edges_b
     numeric_edges = numeric_edges_a + numeric_edges_b
 
     return qnode_chain, qnodes_label_edges, pnodes_edges, pnodes_label_edges, numeric_edges
 
 
-def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Hierarchy'):
+def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Quantile_Hierarchy'):
     """
     Link Hierarchy
     """
     from functools import reduce
 
-    if "Fixed" in mode:
-        bs = get_edge_starts(df_sli, 'Fixed', 2 ** levels)
-    else:
-        bs = get_edge_starts(df_sli, 'Quantile', 2 ** levels)
+    bs = get_edge_starts(df_sli, mode, 2 ** levels)
     bs_list = []
     for lv in range(levels + 1):
         bs_list.append(bs[0::2 ** lv])
@@ -215,11 +214,11 @@ def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Hiera
 
     qnode_chain_list = list()
     for lv in range(levels + 1):
-        qnode_chain_list.append(create_chain(qnodes_collect_list[lv], property_))
+        qnode_chain_list.append(create_chain(qnodes_collect_list[lv], property_, reverse_chain=False))
     for lv in range(levels - 1):
         qnode_chain_list.append(create_hierarchy(qnodes_collect_list[lv],
                                                  qnodes_collect_list[lv + 1],
-                                                 property_))
+                                                 property_, reverse_relation=False))
 
     pnodes_collect, pnodes_edges, pnodes_label_edges = create_property_labels(property_, unit)
 
@@ -251,19 +250,24 @@ def create_new_edges(df, mode, num_bins=None, num_levels=None):
 
     for property_ in tqdm(df['label'].unique()):
 
-        try:
-            # Iterate through each numeric property
-            sli = df[df['label'] == property_]
-            if len(sli) < 100:
-                continue
+        # Iterate through each numeric property
+        sli = df[df['label'] == property_]
+        if len(sli) < 100:  # Filter out rare properties
+            continue
 
-            if mode == "QuantileDual" or mode == "FixedDual":
-                assert (num_bins is not None)
-                a, b, c, d, e = generate_edges_dualLink(sli, property_, num_bins, mode)
-            elif mode == "Hierarchy" or mode == "FixedHierarchy":
-                a, b, c, d, e = generate_edges_hierarchy(sli, property_, num_levels, mode)
+        try:
+            if mode.endswith("Single"):
+                assert(num_bins is not None)
+                a, b, c, d, e = generate_edges_single(sli, property_, num_bins=num_bins, unit=None, mode=mode)
+            elif mode.endswith("Overlap"):
+                assert(num_bins is not None)
+                a, b, c, d, e = generate_edges_overlapping(sli, property_, num_bins=num_bins, unit=None, mode=mode)
+            elif mode.endswith("Hierarchy"):
+                assert(num_levels is not None)
+                a, b, c, d, e = generate_edges_hierarchy(sli, property_, levels=num_levels, unit=None, mode=mode)
             else:
-                a, b, c, d, e = generate_edges(sli, property_, mode, num_bins)
+                print("Unsupported data type!")
+                continue
 
             qnodes_edges += a
             qnodes_label_edges += b
@@ -272,8 +276,9 @@ def create_new_edges(df, mode, num_bins=None, num_levels=None):
             numeric_edges += e
             numeric_edges_raw = sli if numeric_edges_raw is None else pd.concat([numeric_edges_raw, sli])
 
-        except Exception as e:
-            print(f"Error encountered at property {property_}. Size {len(sli)}. Continue...")
+        except TypeError as e:
+            assert(sli is not None)
+            print(f"Error encountered at property {property_}. Size {len(sli)}. Error: {e}. Continue...")
             import traceback
             traceback.print_exc()
 

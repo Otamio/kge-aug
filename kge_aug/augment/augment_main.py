@@ -11,6 +11,8 @@ import json
 
 def augment_lp(entities, df, dataset, mode, bins=None, levels=3):
 
+    suffix = bins if bins is not None else levels
+
     if mode in CHAINABLE_MODE:
 
         print(f'Running mode {mode}')
@@ -18,15 +20,18 @@ def augment_lp(entities, df, dataset, mode, bins=None, levels=3):
         numeric_edges_processed, _, qnode_edges = create_new_edges(df, mode, bins, levels)
 
         # Write the augmented version (without chain)
-        pd.concat([entities, numeric_edges_processed]).to_csv(f'datasets/{dataset}/data/train_{mode}.tsv',
-                                                              sep='\t', header=None, index=None)
+        pd.concat([entities, numeric_edges_processed])\
+            .to_csv(f'datasets/{dataset}/processed/train_{mapping_no_chain[mode]}_{suffix}.txt',
+                    sep='\t', header=False, index=False)
         # Write the augmented version (with chain)
-        pd.concat([entities, numeric_edges_processed,
-                   pd.DataFrame(qnode_edges)]).to_csv(f'datasets/{dataset}/data/train_{mode}_Chain.tsv',
-                                                      sep='\t', header=None, index=None)
+        pd.concat([entities, numeric_edges_processed, pd.DataFrame(qnode_edges)])\
+            .to_csv(f'datasets/{dataset}/processed/train_{mapping_chain[mode]}_{suffix}.txt',
+                    sep='\t', header=False, index=False)
 
 
 def augment_np(entities, values, dataset, mode, bins=None, levels=3):
+
+    suffix = bins if bins is not None else levels
 
     if mode in CHAINABLE_MODE:
 
@@ -57,7 +62,9 @@ def augment_np(entities, values, dataset, mode, bins=None, levels=3):
             os.mkdir(f'datasets/{dataset}/stats')
         except FileExistsError:
             pass
-        with open(f'datasets/{dataset}/stats/train_{mode}.json', 'w+') as fd:
+        with open(f'datasets/{dataset}/stats/train_{mapping_no_chain[mode]}.json', 'w+') as fd:
+            json.dump(medians_dict, fd, indent=2)
+        with open(f'datasets/{dataset}/stats/train_{mapping_chain[mode]}.json', 'w+') as fd:
             json.dump(medians_dict, fd, indent=2)
 
         try:
@@ -66,10 +73,11 @@ def augment_np(entities, values, dataset, mode, bins=None, levels=3):
             pass
 
         # Write the original version
-        pd.concat([entities, numeric_edges_processed]).to_csv(f'datasets/{dataset}/numeric/train_{mode}.tsv',
-                                                              sep='\t', header=None, index=None)
+        pd.concat([entities, numeric_edges_processed])\
+            .to_csv(f'datasets/{dataset}/numeric/train_{mapping_no_chain[mode]}_{suffix}.tsv',
+                    sep='\t', header=False, index=False)
 
         # Write the chaining version
-        pd.concat([entities, numeric_edges_processed,
-                   pd.DataFrame(qnode_edges)]).to_csv(f'datasets/{dataset}/numeric/train_{mode}_Chain.tsv',
-                                                      sep='\t', header=None, index=None)
+        pd.concat([entities, numeric_edges_processed, pd.DataFrame(qnode_edges)])\
+            .to_csv(f'datasets/{dataset}/numeric/train_{mapping_chain[mode]}_{suffix}.tsv',
+                    sep='\t', header=False, index=False)
