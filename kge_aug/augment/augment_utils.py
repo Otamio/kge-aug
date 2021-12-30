@@ -1,3 +1,4 @@
+import pandas as pd
 from tqdm import tqdm
 from bisect import bisect
 from utils import *
@@ -139,11 +140,12 @@ def create_numeric_edges(df_sli, bins, qnodes_collect, suffix=""):
 #    Edge Generation Functions
 ##########################################
 
-def generate_edges_single(df_sli, property_, num_bins=None, unit=None, mode='Quantile_Single'):
+def generate_edges_single(train, property_, num_bins=None, unit=None, mode='Quantile_Single',
+                          valid=None, test=None):
     """
     Generate a 1D partition of literal nodes and add them to entity nodes
     """
-    bins = get_edge_starts(df_sli, mode, num_bins)
+    bins = get_edge_starts(train, mode, num_bins)
     # Generate the qnode
     qnodes_collect, qnodes_label_edges = create_literal_labels(bins, property_)
 
@@ -152,20 +154,33 @@ def generate_edges_single(df_sli, property_, num_bins=None, unit=None, mode='Qua
     # Generate the pnodes
     pnodes_collect, pnodes_edges, pnodes_label_edges = create_property_labels(property_, unit)
     # Generate numeric edges
-    numeric_edges = create_numeric_edges(df_sli, bins, qnodes_collect)
+    numeric_edges_train = create_numeric_edges(train, bins, qnodes_collect)
+    numeric_edges_valid = create_numeric_edges(valid, bins, qnodes_collect) if valid is not None else None
+    numeric_edges_test = create_numeric_edges(test, bins, qnodes_collect) if test is not None else None
 
-    return qnode_chain, qnodes_label_edges, pnodes_edges, pnodes_label_edges, numeric_edges
+    return qnode_chain, qnodes_label_edges, pnodes_edges, pnodes_label_edges, \
+        (numeric_edges_train, numeric_edges_valid, numeric_edges_test)
 
 
-def generate_edges_overlapping(df_sli, property_, num_bins=None, unit=None, mode='Quantile_Overlap'):
+def generate_edges_overlapping(train, property_, num_bins=None, unit=None, mode='Quantile_Overlap',
+                               valid=None, test=None):
+    def compute_numeric_edges(df, bins_a, bins_b, qnodes_collect_a, qnodes_collect_b):
+        if df is None:
+            return None
+        numeric_edges_a = create_numeric_edges(df, bins_a, qnodes_collect_a, suffix="_right")
+        numeric_edges_b = create_numeric_edges(df, bins_b, qnodes_collect_b, suffix="_left")
+        numeric_edges = numeric_edges_a + numeric_edges_b
+        return numeric_edges
+
     """
     One numeric edge = 2 links
     """
-    bs = get_edge_starts(df_sli, mode, num_bins)
+    bs = get_edge_starts(train, mode, num_bins)
     bins_a, bins_b = bs[0::2], np.concatenate(([bs[0]], bs[1::2]))
 
     qnodes_collect_a, qnodes_label_edges_a = create_literal_labels(bins_a, property_)
     qnodes_collect_b, qnodes_label_edges_b = create_literal_labels(bins_b, property_)
+    qnodes_label_edges = qnodes_label_edges_a + qnodes_label_edges_b
 
     qnodes_collect_all = []
     for i in range(len(qnodes_collect_a)):
@@ -178,23 +193,31 @@ def generate_edges_overlapping(df_sli, property_, num_bins=None, unit=None, mode
 
     pnodes_collect, pnodes_edges, pnodes_label_edges = create_property_labels(property_, unit)
 
-    numeric_edges_a = create_numeric_edges(df_sli, bins_a, qnodes_collect_a, suffix="_right")
-    numeric_edges_b = create_numeric_edges(df_sli, bins_b, qnodes_collect_b, suffix="_left")
+    numeric_edges_train = compute_numeric_edges(train, bins_a, bins_b, qnodes_collect_a, qnodes_collect_b)
+    numeric_edges_valid = compute_numeric_edges(valid, bins_a, bins_b, qnodes_collect_a, qnodes_collect_b)
+    numeric_edges_test = compute_numeric_edges(test, bins_a, bins_b, qnodes_collect_a, qnodes_collect_b)
 
-    # qnode_chain = qnode_chain_a + qnode_chain_a
-    qnodes_label_edges = qnodes_label_edges_a + qnodes_label_edges_b
-    numeric_edges = numeric_edges_a + numeric_edges_b
-
-    return qnode_chain, qnodes_label_edges, pnodes_edges, pnodes_label_edges, numeric_edges
+    return qnode_chain, qnodes_label_edges, pnodes_edges, pnodes_label_edges, \
+        (numeric_edges_train, numeric_edges_valid, numeric_edges_test)
 
 
-def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Quantile_Hierarchy'):
+def generate_edges_hierarchy(train, property_, levels=3, unit=None, mode='Quantile_Hierarchy',
+                             valid=None, test=None):
     """
     Link Hierarchy
     """
     from functools import reduce
+    def compute_numeric_edges(df, bs_list, qnodes_collect_list):
+        if df is None:
+            return None
+        numeric_edges_list = list()
+        for lv in range(levels + 1):
+            numeric_edges_list.append(
+                create_numeric_edges(train, bs_list[lv], qnodes_collect_list[lv], suffix=f"_{lv}")
+            )
+        return reduce(lambda x, y: x + y, numeric_edges_list)
 
-    bs = get_edge_starts(df_sli, mode, 2 ** levels)
+    bs = get_edge_starts(train, mode, 2 ** levels)
     bs_list = []
     for lv in range(levels + 1):
         bs_list.append(bs[0::2 ** lv])
@@ -209,56 +232,58 @@ def generate_edges_hierarchy(df_sli, property_, levels=3, unit=None, mode='Quant
     for lv in range(levels + 1):
         qnode_chain_list.append(create_chain(qnodes_collect_list[lv], property_, reverse_chain=False))
     for lv in range(levels - 1):
-        qnode_chain_list.append(create_hierarchy(qnodes_collect_list[lv],
-                                                 qnodes_collect_list[lv + 1],
+        qnode_chain_list.append(create_hierarchy(qnodes_collect_list[lv], qnodes_collect_list[lv + 1],
                                                  property_, reverse_relation=False))
 
     pnodes_collect, pnodes_edges, pnodes_label_edges = create_property_labels(property_, unit)
 
-    numeric_edges_list = list()
-    for l in range(levels + 1):
-        numeric_edges_list.append(create_numeric_edges(df_sli, bs_list[l], qnodes_collect_list[l]))
 
     qnode_chain = reduce(lambda x, y: x + y, qnode_chain_list)
     qnodes_label_edges = reduce(lambda x, y: x + y, qnodes_label_edges_list)
-    numeric_edges = reduce(lambda x, y: x + y, numeric_edges_list)
+    numeric_edges_train = compute_numeric_edges(train, bs_list, qnodes_collect_list)
+    numeric_edges_valid = compute_numeric_edges(valid, bs_list, qnodes_collect_list)
+    numeric_edges_test = compute_numeric_edges(test, bs_list, qnodes_collect_list)
 
-    return qnode_chain, qnodes_label_edges, pnodes_edges, pnodes_label_edges, numeric_edges
+    return qnode_chain, qnodes_label_edges, pnodes_edges, pnodes_label_edges, \
+        (numeric_edges_train, numeric_edges_valid, numeric_edges_test)
 
 
 ##########################################
 #    Edge Creation Functions
 ##########################################
 
-def create_new_edges(df, mode, num_bins=None):
+def create_new_edges(train, mode, num_bins=None, valid=None, test=None):
     """
     Create the new edges based on the partitioned data
     """
-    qnodes_edges = []
-    qnodes_label_edges = []  # (metadata) entity labels
-    pnodes_edges = []
-    pnodes_label_edges = []  # (metadata) property labels
-    numeric_edges = []
-    numeric_edges_raw = None  # numeric edges (node2 as numbers)
+    qnodes_edges, qnodes_label_edges = [], []  # (metadata) entity labels
+    pnodes_edges, pnodes_label_edges = [], []  # (metadata) property labels
+    train_edges, train_edges_raw = [], None  # numeric edges (node2 as numbers)
+    valid_edges, valid_edges_raw = [], None
+    test_edges, test_edges_raw = [], None
 
-    for property_ in tqdm(df['label'].unique()):
+    for property_ in tqdm(train['label'].unique()):
 
         # Iterate through each numeric property
-        sli = df[df['label'] == property_]
-        if len(sli) < 100:  # Filter out rare properties
+        sli_train = train[train['label'] == property_]
+        if len(sli_train) < 100:  # Filter out rare properties
             continue
+        sli_valid = valid[valid['label'] == property_] if valid is not None else None
+        sli_test = test[test['label'] == property_] if test is not None else None
 
         try:
             if mode.endswith("Single"):
                 assert(num_bins is not None)
-                a, b, c, d, e = generate_edges_single(sli, property_, num_bins=num_bins, unit=None, mode=mode)
+                a, b, c, d, e = generate_edges_single(sli_train, property_, num_bins=num_bins,
+                                                      unit=None, mode=mode, valid=sli_valid, test=sli_test)
             elif mode.endswith("Overlap"):
                 assert(num_bins is not None)
-                a, b, c, d, e = generate_edges_overlapping(sli, property_, num_bins=num_bins, unit=None, mode=mode)
+                a, b, c, d, e = generate_edges_overlapping(sli_train, property_, num_bins=num_bins,
+                                                           unit=None, mode=mode, valid=sli_valid, test=sli_test)
             elif mode.endswith("Hierarchy"):
                 assert(num_bins is not None)
-                a, b, c, d, e = generate_edges_hierarchy(sli, property_, levels=int(np.log2(num_bins)),
-                                                         unit=None, mode=mode)
+                a, b, c, d, e = generate_edges_hierarchy(sli_train, property_, levels=int(np.log2(num_bins)),
+                                                         unit=None, mode=mode, valid=sli_valid, test=sli_test)
             else:
                 print("Unsupported data type!")
                 continue
@@ -267,15 +292,26 @@ def create_new_edges(df, mode, num_bins=None):
             qnodes_label_edges += b
             pnodes_edges += c
             pnodes_label_edges += d
-            numeric_edges += e
-            numeric_edges_raw = sli if numeric_edges_raw is None else pd.concat([numeric_edges_raw, sli])
+
+            train_edges += e[0]
+            train_edges_raw = sli_train if train_edges_raw is None else pd.concat([train_edges_raw, sli_train])
+            if valid is not None:
+                valid_edges += e[1]
+                valid_edges_raw = sli_valid if valid_edges_raw is None else pd.concat([valid_edges_raw, sli_valid])
+            if test is not None:
+                test_edges += e[2]
+                test_edges_raw = sli_test if test_edges_raw is None else pd.concat([test_edges_raw, sli_test])
 
         except TypeError as e:
-            assert(sli is not None)
-            print(f"Error encountered at property {property_}. Size {len(sli)}. Error: {e}. Continue...")
+            assert(sli_train is not None)
+            print(f"Error encountered at property {property_}. Size {len(sli_train)}. Error: {e}. Continue...")
             import traceback
             traceback.print_exc()
 
-    numeric_edges_processed = pd.DataFrame(numeric_edges)
-
-    return numeric_edges_processed, numeric_edges_raw, qnodes_edges
+    train_edges_processed = pd.DataFrame(train_edges)
+    if valid is None or test is None:
+        return (train_edges_processed, None, None), (train_edges_raw, None, None), qnodes_edges
+    valid_edges_processed = pd.DataFrame(valid_edges)
+    test_edges_processed = pd.DataFrame(test_edges)
+    return (train_edges_processed, valid_edges_processed, test_edges_processed), \
+           (train_edges_raw, valid_edges_raw, test_edges_raw), qnodes_edges

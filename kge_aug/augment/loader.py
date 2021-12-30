@@ -23,22 +23,37 @@ def get_data_lp(dataset):
     return entities, df
 
 
+def clean_entities(df, dataset):
+    if dataset.lower() == "yago15k":
+        df[0] = df[0].apply(lambda x: x.split("resource")[-1][1:-1])
+        df[1] = df[1].apply(lambda x: x.split("resource")[-1][1:-1])
+        df[2] = df[2].apply(lambda x: x.split("resource")[-1][1:-1])
+    df.columns = ['node1', 'label', 'node2']
+    return df
+
+
+def clean_numeric(df, dataset):
+    if dataset.lower() == "yago15k":
+        df[0] = df[0].apply(lambda x: x.split("resource")[-1][1:-1])
+        df[1] = df[1].apply(lambda x: x.split("resource")[-1][1:-1])
+    elif dataset.lower() == "fb15k237":
+        df[1] = df[1].apply(lambda x: x.split("ns")[-1][1:-1])
+    df.columns = ['node1', 'label', 'node2']
+    df = df[df['node2'].notnull()]
+    df = df.reset_index(drop=True)
+    return df
+
+
 def get_data_np(dataset):
     """
     Get the entity file and literal file for
     """
-    entities = pd.read_csv(f'datasets/{dataset}/numeric/train_kge', sep='\t', header=None)
-    entities[0] = entities[0].apply(lambda x: x if "org" not in x else x.split("org")[1][:-1])
-    entities[1] = entities[1].apply(lambda x: x if "org" not in x else x.split("org")[1][:-1])
-    entities[2] = entities[2].apply(lambda x: x if "org" not in x else x.split("org")[1][:-1])
-    entities.columns = ['node1', 'label', 'node2']
-
-    values = pd.read_csv(f'datasets/{dataset}/numeric/train_100', sep='\t', header=None)
-    values[0] = values[0].apply(lambda x: x if "org" not in x else x.split("org")[1][:-1])
-    values[1] = values[1].apply(lambda x: x if "com" not in x else x.split("com")[1][:-1])
-    values[1] = values[1].apply(lambda x: x if "org" not in x else x.split("org")[1][:-1])
-    values.columns = ['node1', 'label', 'node2']
-    values = values[values['node2'].notnull()]
-    values = values.reset_index(drop=True)
-
-    return entities, values
+    entities = clean_entities(pd.read_csv(f'datasets/{dataset}/numeric/train_kge', sep='\t', header=None),
+                              dataset)
+    train = clean_numeric(pd.read_csv(f'datasets/{dataset}/numeric/train_100', sep='\t', header=None),
+                          dataset)
+    valid = clean_numeric(pd.read_csv(f'datasets/{dataset}/numeric/dev', sep='\t', header=None),
+                          dataset)
+    test = clean_numeric(pd.read_csv(f'datasets/{dataset}/numeric/test', sep='\t', header=None),
+                         dataset)
+    return entities, train, valid, test

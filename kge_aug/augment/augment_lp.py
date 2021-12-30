@@ -3,7 +3,6 @@ from augment_main import augment_lp
 from loader import get_data_lp
 from constant import *
 import os
-import numpy as np
 
 
 parser = argparse.ArgumentParser(
