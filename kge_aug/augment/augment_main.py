@@ -58,11 +58,11 @@ def augment_np(entities, train, valid, test, dataset, mode, bins=None):
         collections = defaultdict(list)
         collections_raw = defaultdict(list)
 
-        for i, row in train_edges_processed.iterrows():
-            collections_raw[row['node1'] + '__' + row['label']].append(row['node2'])
+        for i, row in train_edges_raw.iterrows():
+            collections_raw[row['node1'] + '  ' + row['label']].append(row['node2'])
 
         for i, row in train_edges_processed.iterrows():
-            key = row['node1'] + '__' + row['label'].split('-')[1]
+            key = row['node1'] + '  ' + row['label'].split('-')[1].rsplit('_', 1)[0]
             for item in collections_raw[key]:
                 collections[row['node2']].append(item)
 
@@ -70,17 +70,9 @@ def augment_np(entities, train, valid, test, dataset, mode, bins=None):
             medians_dict[k] = np.median(v)
 
         # Finally, add the median of each property as a baseline
-        for property_ in train_edges_processed['label'].unique():
+        for property_ in train_edges_raw['label'].unique():
             medians_dict[property_] = \
                 train_edges_raw[train_edges_raw['label'] == property_]['node2'].median()
-
-        try_to_make_dir(f'datasets/{dataset}/stats')
-        try_to_make_dir(f'datasets/{dataset}/processed')
-
-        with open(f'datasets/{dataset}/stats/train_{mapping_no_chain[mode]}.json', 'w+') as fd:
-            json.dump(medians_dict, fd, indent=2)
-        with open(f'datasets/{dataset}/stats/train_{mapping_chain[mode]}.json', 'w+') as fd:
-            json.dump(medians_dict, fd, indent=2)
 
         # Write the original version
         target = f'datasets/{dataset}/numeric/{dataset}_{mapping_no_chain[mode]}_{suffix}'
@@ -91,6 +83,8 @@ def augment_np(entities, train, valid, test, dataset, mode, bins=None):
         test_edges_processed.to_csv(f'{target}/test.txt', sep='\t', header=False, index=False)
         valid_edges_raw.to_csv(f'{target}/valid_raw.txt', sep='\t', header=False, index=False)
         test_edges_raw.to_csv(f'{target}/test_raw.txt', sep='\t', header=False, index=False)
+        with open(f'{target}/medians.dict', 'w+') as fd:
+            json.dump(medians_dict, fd, indent=2)
 
         # Write the chaining version
         target = f'datasets/{dataset}/numeric/{dataset}_{mapping_chain[mode]}_{suffix}'
@@ -101,3 +95,5 @@ def augment_np(entities, train, valid, test, dataset, mode, bins=None):
         test_edges_processed.to_csv(f'{target}/test.txt', sep='\t', header=False, index=False)
         valid_edges_raw.to_csv(f'{target}/valid_raw.txt', sep='\t', header=False, index=False)
         test_edges_raw.to_csv(f'{target}/test_raw.txt', sep='\t', header=False, index=False)
+        with open(f'{target}/medians.dict', 'w+') as fd:
+            json.dump(medians_dict, fd, indent=2)
